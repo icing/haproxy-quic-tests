@@ -1,0 +1,13 @@
+[haproxy]
+path = @HAPROXY_PATH@
+
+[ngtcp2]
+path = @NGTCP2_PATH@
+
+[apache]
+httpd = @HTTPD@
+apachectl = @APACHECTL@
+
+[tests]
+haproxy_port = @HAPROXY_PORT@
+httpd_port = @HTTPD_PORT@
