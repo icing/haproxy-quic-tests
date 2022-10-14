@@ -5,6 +5,7 @@ path = @HAPROXY_PATH@
 path = @NGTCP2_PATH@
 
 [apache]
+apxs = @APXS@
 httpd = @HTTPD@
 apachectl = @APACHECTL@
 

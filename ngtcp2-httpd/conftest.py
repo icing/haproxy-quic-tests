@@ -8,7 +8,7 @@ from testenv import Env
 def pytest_report_header(config):
     env = Env()
     return [
-        f"ngtcp2-httpd: [haproxy {env.haproxy_version}]",
+        f"ngtcp2-httpd: [haproxy {env.haproxy_version}, {env.haproxy_ssl}]",
         f"ngtcp2 example clients: {env.crypto_libs()}",
     ]
 

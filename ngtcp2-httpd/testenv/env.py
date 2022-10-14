@@ -71,9 +71,15 @@ class Env:
         self._haproxy_path = self.config['haproxy']['path']
         self._haproxy = os.path.join(self._haproxy_path, 'haproxy')
         self._haproxy_version = None
+        self._haproxy_ssl = None
         self._ngtcp2_path = self.config['ngtcp2']['path']
         self._haproxy_port = self.config['tests']['haproxy_port']
         self._httpd_port = self.config['tests']['httpd_port']
+        self._httpd = self.config['apache']['httpd']
+        self._apachectl = self.config['apache']['apachectl']
+        self._apxs = self.config['apache']['apxs']
+        if len(self._apxs) == 0:
+            self._apxs = None
         self._examples_pem = {
             'key': 'xxx',
             'cert': 'xxx',
@@ -111,18 +117,31 @@ class Env:
     def verbose(self) -> int:
         return self._verbose
 
-    @property
-    def haproxy_version(self) -> int:
-        if self._haproxy_version is None:
-            p = subprocess.run(args=[self._haproxy, '-v'], text=True,
-                               capture_output=True)
-            assert p.returncode == 0
-            m = re.match(r'HAProxy version (\S+) .*', p.stdout)
+    def _get_haproxy_props(self):
+        p = subprocess.run(args=[self._haproxy, '-vv'], text=True,
+                           capture_output=True)
+        assert p.returncode == 0
+        for l in p.stdout.splitlines(keepends=False):
+            m = re.match(r'HAProxy version (\S+) .*', l)
             if m:
                 self._haproxy_version = m.group(1)
-            else:
-                self._haproxy_version = 'unknown'
+                continue
+            m = re.match(r'Built with OpenSSL version : (.+\S+)', l)
+            if m:
+                self._haproxy_ssl = m.group(1)
+                continue
+
+    @property
+    def haproxy_version(self) -> str:
+        if self._haproxy_version is None:
+            self._get_haproxy_props()
         return self._haproxy_version
+
+    @property
+    def haproxy_ssl(self) -> str:
+        if self._haproxy_ssl is None:
+            self._get_haproxy_props()
+        return self._haproxy_ssl
 
     @property
     def gen_dir(self) -> str:
@@ -167,3 +186,11 @@ class Env:
     @property
     def httpd_port(self) -> str:
         return self._httpd_port
+
+    @property
+    def apachectl(self) -> str:
+        return self._apachectl
+
+    @property
+    def apxs(self) -> str:
+        return self._apxs

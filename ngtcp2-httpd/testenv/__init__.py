@@ -4,3 +4,4 @@ from .certs import TestCA, Credentials
 from .log import LogFile
 from .tls import HandShake, HSRecord
 from .haproxy import HAProxy
+from .httpd import Httpd

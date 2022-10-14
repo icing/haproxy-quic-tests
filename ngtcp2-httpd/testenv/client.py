@@ -98,6 +98,8 @@ class ExampleClient:
         self._session_path = f'{self.env.gen_dir}/{self._crypto_lib}-client.session'
         self._tp_path = f'{self.env.gen_dir}/{self._crypto_lib}-client.tp'
         self._data_path = f'{self.env.gen_dir}/{self._crypto_lib}-client.data'
+        if os.path.isfile(self._log_path):
+            os.remove(self._log_path)
 
     @property
     def path(self):
@@ -144,6 +146,8 @@ class ExampleClient:
             os.remove(self._qlog_path)
         with open(self._log_path, 'w') as log_file:
             logfile = LogFile(path=self._log_path)
+            log_file.write(f'*******\n******* {" ".join(args)}\n*******\n')
+            log_file.flush()
             process = subprocess.Popen(args=args, text=True,
                                        stdout=log_file, stderr=log_file)
             process.wait()
