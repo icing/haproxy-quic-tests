@@ -89,19 +89,25 @@ if test x"$request_httpd" = "xcheck"; then
     if test "x$APACHECTL" = "x"; then
         AC_MSG_ERROR("no apachectl installation found")
     fi
+    AC_PATH_PROG([APXS], [apxs])
 else
     HTTPD="${request_httpd}/bin/httpd"
     APACHECTL="${request_httpd}/bin/apachectl"
+    APXS="${request_httpd}/bin/apxs"
     if test ! -x "${HTTPD}"; then
         AC_MSG_ERROR("no httpd found as ${HTTPD}")
     fi
     if test ! -x "${APACHECTL}"; then
         AC_MSG_ERROR("no apachectl found as ${APACHECTL}")
     fi
+    if test ! -x "${APXS}"; then
+        APXS=""
+    fi
     AC_MSG_NOTICE("using HTTPD=$HTTPD as configured")
 fi
 AC_SUBST(HTTPD)
 AC_SUBST(APACHECTL)
+AC_SUBST(APXS)
 
 HAPROXY_PORT=42001
 HTTPD_PORT=42002
@@ -120,4 +126,5 @@ AC_MSG_NOTICE([summary of build options:
     ngtcp2:         ${NGTCP2_PATH}
     httpd:          ${HTTPD} ${HTTPD_VERSION}
     apachectl       ${APACHECTL}
+    apxs            ${APXS}
 ])

@@ -14,7 +14,7 @@ from .tls import HSRecord, HandShake
 log = logging.getLogger(__name__)
 
 
-class ClientRun:
+class QuicClientRun:
 
     def __init__(self, env: Env, returncode, logfile: LogFile):
         self.env = env
@@ -151,6 +151,6 @@ class ExampleClient:
             process = subprocess.Popen(args=args, text=True,
                                        stdout=log_file, stderr=log_file)
             process.wait()
-            return ClientRun(env=self.env, returncode=process.returncode,
-                             logfile=logfile)
+            return QuicClientRun(env=self.env, returncode=process.returncode,
+                                 logfile=logfile)
 

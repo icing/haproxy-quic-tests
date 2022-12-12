@@ -10,7 +10,7 @@ from testenv import ExampleClient
 log = logging.getLogger(__name__)
 
 
-class TestHandshake:
+class TestQuicHandshake:
 
     @pytest.fixture(scope='class')
     def httpd(self, env) -> Httpd:
