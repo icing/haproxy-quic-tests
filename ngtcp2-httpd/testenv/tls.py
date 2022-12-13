@@ -906,26 +906,31 @@ class HandShake:
     RT_NAME_BY_ID = {}
     RT_CLS_BY_ID = {}
 
-    @classmethod
-    def _parse_rec(cls, data):
-        d, hsid = _get_int(data, 1)
-        if hsid not in cls.RT_CLS_BY_ID:
+    def _parse_rec(self, data):
+        d = data
+        if self._skip_rec_header:
+            d, rec_no = _get_int(d, 1)
+            d, prot_version = _get_int(d, 2)
+            d, rec_len = _get_int(d, 2)
+            if rec_len > len(d):
+                log.warning(f'tls rec{rec_no:0x}: version={prot_version:0x}, len={rec_len:0x}, dlen={len(d):0x}')
+        d, hsid = _get_int(d, 1)
+        if hsid not in HandShake.RT_CLS_BY_ID:
             raise ParseError(f'unknown type {hsid}')
         d, rec_len = _get_int(d, 3)
         if rec_len > len(d):
             # incomplete, need more data
             return data, None
         d, rec_data = _get_field(d, rec_len)
-        if hsid in cls.RT_CLS_BY_ID:
-            name = cls.RT_NAME_BY_ID[hsid]
-            rcls = cls.RT_CLS_BY_ID[hsid]
+        if hsid in HandShake.RT_CLS_BY_ID:
+            name = HandShake.RT_NAME_BY_ID[hsid]
+            rcls = HandShake.RT_CLS_BY_ID[hsid]
         else:
             name = f'CryptoRecord(0x{hsid:0x})'
             rcls = HSRecord
         return d, rcls(hsid=hsid, name=name, data=rec_data)
 
-    @classmethod
-    def _parse(cls, source, strict=False, verbose: int = 0):
+    def _parse(self, source, strict=False, verbose: int = 0):
         d = b''
         hsid = 0
         hsrecs = []
@@ -935,7 +940,7 @@ class HandShake:
         while len(blocks) > 0:
             try:
                 total_data = b''.join(blocks)
-                remain, r = cls._parse_rec(total_data)
+                remain, r = self._parse_rec(total_data)
                 if r is None:
                     # if we could not recognize a record, skip the first
                     # data block and try again
@@ -970,10 +975,11 @@ class HandShake:
             cls.RT_CLS_BY_ID[hsid] = rcls
 
     def __init__(self, source: Iterable[bytes], strict: bool = False,
-                 verbose: int = 0):
+                 verbose: int = 0, skip_rec_header=False):
         self._source = source
         self._strict = strict
         self._verbose = verbose
+        self._skip_rec_header = skip_rec_header
 
     def __iter__(self):
         return HSIterator(recs=self._parse(self._source, strict=self._strict,

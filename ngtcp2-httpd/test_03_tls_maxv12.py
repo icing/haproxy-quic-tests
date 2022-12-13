@@ -20,7 +20,8 @@ class TestTlsHandshake:
 
     @pytest.fixture(scope='class')
     def ha(self, env, httpd) -> HAProxy:
-        ha = HAProxy(env=env)
+        # https frontend restricted to max TLSv1.2
+        ha = HAProxy(env=env, https_opts='ssl-max-ver TLSv1.2')
         assert ha.exists(), f'haproxy not found: {ha.path}'
         assert ha.start()
         yield ha
@@ -36,17 +37,17 @@ class TestTlsHandshake:
         openssl = OpensslClient(env=env)
         yield openssl
 
-    def test_02_01_openssl(self, env: Env, openssl: OpensslClient, ha: HAProxy):
-        # simple connect, no options, expect 1.3 and a session
+    def test_03_01_openssl(self, env: Env, openssl: OpensslClient, ha: HAProxy):
         url = f'https://{env.example_domain}:{env.haproxy_port}/data.json'
-        r = openssl.connect(url=url, intext='blabla')
-        assert r.exit_code == 0, f'{r}'
+        r = openssl.connect(url=url)
         assert r.response, f'{r}'
-        assert r.response['protocol'] == 'TLSv1.3', f'{r}'
+        assert r.response['handshake'], f'{r}'
+        assert r.exit_code == 0, f'stdout: {"".join(r.stdout)}'
+        assert r.response['protocol'] == 'TLSv1.2', f'{r}'
         assert r.response['session'], f'{r}'
         assert r.response['session']['ticket'], f'{r}'
 
-    def test_02_02_curl_get(self, env: Env, curl: CurlClient, ha: HAProxy):
+    def test_03_02_get(self, env: Env, curl: CurlClient, ha: HAProxy):
         r = curl.http_get(url=f'https://{env.example_domain}:{env.haproxy_port}/data.json')
         assert r.exit_code == 0, f'{r}'
         assert r.response, f'{r}'

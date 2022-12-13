@@ -13,9 +13,10 @@ log = logging.getLogger(__name__)
 
 class HAProxy:
 
-    def __init__(self, env: Env):
+    def __init__(self, env: Env, https_opts=None):
         self.env = env
         self._cmd = env.haproxy
+        self._https_opts = https_opts if https_opts else 'alpn h2,http/1.1'
         self._conf_file = os.path.join(env.gen_dir, 'haproxy.cfg')
         self._process = None
         self._logpath = f'{self.env.gen_dir}/haproxy.log'
@@ -100,7 +101,7 @@ class HAProxy:
                 f"",
                 f"frontend front1",
                 f"    mode http",
-                f"    bind :{self.env.haproxy_port} ssl crt {self.env.get_server_credentials().combined_file} alpn h2,http/1.1",
+                f"    bind :{self.env.haproxy_port} ssl crt {self.env.get_server_credentials().combined_file} {self._https_opts}",
                 f"    log stderr format iso local7",
                 f"    option httplog",
                 f"    option tcplog",

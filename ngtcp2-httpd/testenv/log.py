@@ -1,4 +1,5 @@
 import binascii
+import logging
 import os
 import re
 import sys
@@ -6,6 +7,9 @@ import time
 from datetime import timedelta, datetime
 from io import SEEK_END
 from typing import List
+
+
+log = logging.getLogger(__name__)
 
 
 class LogFile:
@@ -70,27 +74,27 @@ class HexDumpScanner:
                 pass
             elif offset == 0:
                 # possible start of a hex dump
-                m = re.match(r'^\s*0+(\s+-)?((\s+[0-9a-f]{2}){1,16})(\s+.*)$',
+                m = re.match(r'^\s*0+(\s+-)?(([\s-]+[0-9a-f]{2}){1,16})(\s+.*)$',
                              l, re.IGNORECASE)
                 if m:
-                    data = binascii.unhexlify(re.sub(r'\s+', '', m.group(2)))
+                    data = binascii.unhexlify(re.sub(r'[\s-]+', '', m.group(2)))
                     offset = 16
                     idx = 1
                     continue
             else:
                 # possible continuation of a hexdump
-                m = re.match(r'^\s*([0-9a-f]+)(\s+-)?((\s+[0-9a-f]{2}){1,16})'
+                m = re.match(r'^\s*([0-9a-f]+)(\s+-)?(([\s-]+[0-9a-f]{2}){1,16})'
                              r'(\s+.*)$', l, re.IGNORECASE)
                 if m:
                     loffset = int(m.group(1), 16)
                     if loffset == offset or loffset == idx:
-                        data += binascii.unhexlify(re.sub(r'\s+', '',
+                        data += binascii.unhexlify(re.sub(r'[\s-]+', '',
                                                           m.group(3)))
                         offset += 16
                         idx += 1
                         continue
                     else:
-                        sys.stderr.write(f'wrong offset {loffset}, expected {offset} or {idx}\n')
+                        log.warning(f'wrong offset {loffset}, expected {offset} or {idx}\n')
             # not a hexdump line, produce any collected data
             if len(data) > 0:
                 yield data

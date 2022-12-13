@@ -7,9 +7,9 @@ from datetime import datetime
 from typing import List
 from urllib.parse import urlparse
 
-from . import ExecResult
+from . import ExecResult, HSRecord, HandShake
 from .env import Env
-
+from .log import HexDumpScanner
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,10 @@ class OpensslClient:
         if intext:
             p.stdin.write(intext)
         time.sleep(.5)  # give session ticket a moment to arrive
-        p.stdin.close()
+        try:
+            p.stdin.close()
+        except:
+            pass  # might have been closed already
         p.wait(timeout=10)
         start = datetime.now()
         sout = p.stdout.readlines()
@@ -57,13 +60,14 @@ class OpensslClient:
             '-connect', f'127.0.0.1:{u.port}',
             '-CAfile', self.env.ca.cert_file,
             '-servername', u.hostname,
+            '-debug',
         ]
 
         if options:
             args.extend(options)
         return args
 
-    def _parse_response(self, output: str):
+    def _parse_response(self, output):
         r = {}
         in_session = False
         if isinstance(output, str):
@@ -115,5 +119,37 @@ class OpensslClient:
             if m:
                 r['session'] = {'ticket': []}
                 in_session = True
+
+        hs_out, hs_in = self._handshake(output)
+        r['handshake'] = {
+            'in': hs_in,
+            'out': hs_out,
+        }
         return r
+
+    def _handshake(self, output) -> List[HSRecord]:
+        write_line = re.compile(r'write to ')
+        scanner = HexDumpScanner(source=output, leading_regex=write_line)
+        out_recs = [data for data in scanner]
+        if self.env.verbose > 1:
+            log.debug(f'detected {len(out_recs)} crypto hexdumps sent')
+            for idx, r in enumerate(out_recs):
+                log.debug(f'data rec {idx}: len={len(r):0x}')
+        hs_sent = [hrec for hrec in HandShake(source=out_recs,
+                                              skip_rec_header=True,
+                                              verbose=self.env.verbose)]
+
+        write_line = re.compile(r'read from ')
+        scanner = HexDumpScanner(source=output, leading_regex=write_line)
+        in_recs = [data for data in scanner]
+        if self.env.verbose > 1:
+            log.debug(f'detected {len(in_recs)} crypto hexdumps received')
+            for idx, r in enumerate(in_recs):
+                log.debug(f'data rec {idx}: len={len(r):0x}')
+        hs_recvd = [hrec for hrec in HandShake(source=in_recs,
+                                               skip_rec_header=True,
+                                               verbose=self.env.verbose)]
+        if self.env.verbose > 1:
+            log.debug(f'detected {len(hs_recvd)} crypto records received')
+        return hs_sent, hs_recvd
 
