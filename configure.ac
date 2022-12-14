@@ -116,7 +116,7 @@ AC_SUBST(HTTPD_PORT)
 
 AC_CONFIG_FILES([
     Makefile
-    ngtcp2-httpd/config.ini
+    tests/config.ini
 ])
 
 AC_OUTPUT

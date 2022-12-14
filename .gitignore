@@ -156,9 +156,9 @@ Makefile
 m4
 
 # our config
-ngtcp2-httpd/config.ini
+tests/config.ini
 
 #IDEs
 .idea
 
-ngtcp2-httpd/gen
+tests/gen
