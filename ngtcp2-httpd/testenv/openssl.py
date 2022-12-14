@@ -131,25 +131,23 @@ class OpensslClient:
         write_line = re.compile(r'write to ')
         scanner = HexDumpScanner(source=output, leading_regex=write_line)
         out_recs = [data for data in scanner]
-        if self.env.verbose > 1:
-            log.debug(f'detected {len(out_recs)} crypto hexdumps sent')
-            for idx, r in enumerate(out_recs):
-                log.debug(f'data rec {idx}: len={len(r):0x}')
         hs_sent = [hrec for hrec in HandShake(source=out_recs,
                                               skip_rec_header=True,
                                               verbose=self.env.verbose)]
+        if self.env.verbose > 1:
+            log.debug(f'detected {len(hs_sent)} crypto recs sent')
+            for idx, r in enumerate(hs_sent):
+                log.debug(f'rec {idx}: {r.name}')
 
         write_line = re.compile(r'read from ')
         scanner = HexDumpScanner(source=output, leading_regex=write_line)
         in_recs = [data for data in scanner]
-        if self.env.verbose > 1:
-            log.debug(f'detected {len(in_recs)} crypto hexdumps received')
-            for idx, r in enumerate(in_recs):
-                log.debug(f'data rec {idx}: len={len(r):0x}')
         hs_recvd = [hrec for hrec in HandShake(source=in_recs,
                                                skip_rec_header=True,
                                                verbose=self.env.verbose)]
         if self.env.verbose > 1:
-            log.debug(f'detected {len(hs_recvd)} crypto records received')
+            log.debug(f'detected {len(hs_recvd)} crypto recs received')
+            for idx, r in enumerate(hs_recvd):
+                log.debug(f'rec {idx}: {r.name}')
         return hs_sent, hs_recvd
 

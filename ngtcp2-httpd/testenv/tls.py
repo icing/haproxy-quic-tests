@@ -913,7 +913,8 @@ class HandShake:
             d, prot_version = _get_int(d, 2)
             d, rec_len = _get_int(d, 2)
             if rec_len > len(d):
-                log.warning(f'tls rec{rec_no:0x}: version={prot_version:0x}, len={rec_len:0x}, dlen={len(d):0x}')
+                # incomplete, need more data
+                return data, None
         d, hsid = _get_int(d, 1)
         if hsid not in HandShake.RT_CLS_BY_ID:
             raise ParseError(f'unknown type {hsid}')

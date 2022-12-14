@@ -42,7 +42,7 @@ class TestTlsHandshake:
         r = openssl.connect(url=url, intext='blabla')
         assert r.exit_code == 0, f'{r}'
         assert r.response, f'{r}'
-        assert r.response['protocol'] == 'TLSv1.3', f'{r}'
+        assert r.response['protocol'] == 'TLSv1.3', f'{"".join(r.stdout)}'
         assert r.response['session'], f'{r}'
         assert r.response['session']['ticket'], f'{r}'
 

@@ -8,7 +8,7 @@ from testenv import Env, HAProxy, Httpd, CurlClient, OpensslClient
 log = logging.getLogger(__name__)
 
 
-class TestTlsMaxv12:
+class TestTlsNoTicket:
 
     @pytest.fixture(scope='class')
     def httpd(self, env) -> Httpd:
@@ -21,7 +21,7 @@ class TestTlsMaxv12:
     @pytest.fixture(scope='class')
     def ha(self, env, httpd) -> HAProxy:
         # https frontend restricted to max TLSv1.2
-        ha = HAProxy(env=env, https_opts='ssl-max-ver TLSv1.2')
+        ha = HAProxy(env=env, https_opts='no-tls-tickets')
         assert ha.exists(), f'haproxy not found: {ha.path}'
         assert ha.start()
         yield ha
@@ -37,17 +37,27 @@ class TestTlsMaxv12:
         openssl = OpensslClient(env=env)
         yield openssl
 
-    def test_03_01_openssl(self, env: Env, openssl: OpensslClient, ha: HAProxy):
+    def test_04_01_openssl(self, env: Env, openssl: OpensslClient, ha: HAProxy):
         url = f'https://{env.example_domain}:{env.haproxy_port}/data.json'
         r = openssl.connect(url=url)
         assert r.response, f'{r}'
         assert r.response['handshake'], f'{r}'
         assert r.exit_code == 0, f'stdout: {"".join(r.stdout)}'
-        assert r.response['protocol'] == 'TLSv1.2', f'{r}'
+        assert r.response['protocol'] == 'TLSv1.3', f'{r}'
         assert r.response['session'], f'{r}'
         assert r.response['session']['ticket'], f'{r}'
 
-    def test_03_02_get(self, env: Env, curl: CurlClient, ha: HAProxy):
+    def test_04_02_openssl_12(self, env: Env, openssl: OpensslClient, ha: HAProxy):
+        url = f'https://{env.example_domain}:{env.haproxy_port}/data.json'
+        r = openssl.connect(url=url, extra_args=['-tls1_2'])
+        assert r.response, f'{r}'
+        assert r.response['handshake'], f'{r}'
+        assert r.exit_code == 0, f'stdout: {"".join(r.stdout)}'
+        assert r.response['protocol'] == 'TLSv1.3', f'{r}'
+        assert r.response['session'], f'{r}'
+        assert r.response['session']['ticket'], f'{r}'
+
+    def test_04_03_get(self, env: Env, curl: CurlClient, ha: HAProxy):
         r = curl.http_get(url=f'https://{env.example_domain}:{env.haproxy_port}/data.json')
         assert r.exit_code == 0, f'{r}'
         assert r.response, f'{r}'

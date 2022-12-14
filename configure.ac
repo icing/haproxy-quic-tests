@@ -55,7 +55,7 @@ if test x"$request_haproxy" = "xcheck"; then
         AC_MSG_ERROR(haproxy project not found, please specify with --with-haproxy=path)
     fi
 else
-    NGTCP2_PATH="$request_haproxy"
+    HAPROXY_PATH="$request_haproxy"
     if test ! -d "$HAPROXY_PATH"; then
         AC_MSG_ERROR(specified haproxy project in $HAPROXY_PATH not found)
     fi
@@ -67,7 +67,7 @@ AC_SUBST(HAPROXY_PATH)
 if test x"$request_ngtcp2" = "xcheck"; then
     NGTCP2_PATH="$(dirname $PWD)/ngtcp2"
     if test ! -d "$NGTCP2_PATH/examples"; then
-        AC_MSG_ERROR(ngtcp2 project not found, please specify with --with-ngtcp2=path)
+        AC_MSG_WARN(ngtcp2 project not found, please specify with --with-ngtcp2=path)
     fi
 else
     NGTCP2_PATH="$request_ngtcp2"

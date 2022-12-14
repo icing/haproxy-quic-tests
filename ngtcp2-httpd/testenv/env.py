@@ -34,7 +34,6 @@ EXAMPLE_CLIENTS = {
 def init_clients(config):
     clients = {}
     examples = os.path.join(config['ngtcp2']['path'], 'examples')
-    sys.stderr.write(f'init clients from {examples}\n')
     for libname, cname in EXAMPLE_CLIENTS.items():
         cpath = os.path.join(examples, cname)
         if os.path.exists(cpath):
