@@ -53,9 +53,9 @@ class TestTlsNoTicket:
         assert r.response, f'{r}'
         assert r.response['handshake'], f'{r}'
         assert r.exit_code == 0, f'stdout: {"".join(r.stdout)}'
-        assert r.response['protocol'] == 'TLSv1.3', f'{r}'
+        assert r.response['protocol'] == 'TLSv1.2', f'{r}'
         assert r.response['session'], f'{r}'
-        assert r.response['session']['ticket'], f'{r}'
+        assert len(r.response['session']['ticket']) == 0, f'{r}'
 
     def test_04_03_get(self, env: Env, curl: CurlClient, ha: HAProxy):
         r = curl.http_get(url=f'https://{env.example_domain}:{env.haproxy_port}/data.json')
